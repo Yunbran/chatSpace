@@ -3,54 +3,76 @@ var http = require('http').Server(app);
 var io = require('socket.io')(http);
 
 var mongodb = require("mongodb");
-
+var mongoose = require("mongoose");
 var server = new mongodb.Server("127.0.0.1", 27017, {});
-// 27017 is the default port for connecting to MongoDB
 var client = new mongodb.Db('test', server);
 
-// Open the client's connection to the server:
-client.open(function(err, p_client) {
-  console.log("Connected to MongoDB!");
+mongoose.connect('mongodb://localhost/test');
+var db = mongoose.connection;
 
-  // Create a collection, if it doesn't exist already:
-  client.createCollection("demo-collection", function(err, collection) {
-    console.log("Created collection");
-
-    // Here's the document we want to insert:
-    var document = {name: "Jean Valjean",
-                    password: "24601"};
-
-    // Insert it to the collection:
-    collection.insert(document, function(err, docs) {
-      console.log("Inserted a document.");
-
-      // Count just gives us the number of items in collection:
-      collection.count(function(err, count) {
-        console.log("This collection contains " + count + " documents.");
-      });
-
-      // Find() returns a "cursor" which can be converted to an array of
-      // documents:
-      collection.find().toArray(function(err, results) {
-        // Results is an array of all the documents in the collection
-        for (var i = 0; i < results.length; i++) {
-          console.log("Found a document with name = " + results[i].name);
-        }
-
-        // Close the db connection when we're done with it:
-        client.close();
-        console.log("Closed the collection");
-      });
-    });
-  });
+db.on('error', console.error.bind(console, 'connection error:'));
+db.once('open', function callback () {
+  console.log("acceptable");
 });
+
+var kittySchema = mongoose.Schema({
+    name: String,
+    message: String
+})
+
+kittySchema.methods.speak = function () {
+  var greeting = this.name
+    ? "Meow name is " + this.name
+    : "I don't have a name"
+  console.log(greeting);
+}
+
+var Kitten = mongoose.model('Kitten', kittySchema)
+
+
+var silence = new Kitten({ name: 'Silence' })
+console.log(silence.name) // 'Silence'
+
+
+var fluffy = new Kitten({ name: 'fluffy' });
+fluffy.speak() // "Meow name is fluffy"
+
+// fluffy.save(function (err, fluffy) {
+//   if (err) return console.error(err);
+//   fluffy.speak();
+// });
+
+
+  var getData = function(){
+    var result = [];
+
+  Kitten.find(function (err, kittens) {
+    if (err) return console.error(err);
+    var results = [];
+    for(var i=0; i< kittens.length;i++)
+    {
+      results[i] = JSON.stringify(kittens[i].message);
+    }
+    io.emit('chat message', results);
+});
+
+  return result;};
 
 app.get('/', function(req, res){
   res.sendfile('index.html');
 });
 
 io.on('connection', function(socket){
+
+    getData();
+
   	socket.on('chat message', function(msg){
+    var messageDoc = new Kitten({ name: 'anonymous', message: msg})
+    messageDoc.save(function (err, message) {
+    if (err) return console.error(err);
+    message.speak();
+  });
+
     io.emit('chat message', msg);
 
   });

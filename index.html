@@ -28,7 +28,17 @@
         return false;
       });
       socket.on('chat message', function(msg){
-        $('#messages').append($('<li>').text(msg));
+        if(typeof msg === 'string')
+        {
+          $('#messages').append($('<li>').text(msg));
+        }
+        else
+        {
+      for(var i = 0; i < msg.length; i++)
+      { 
+      $('#messages').append($('<li>').text(JSON.parse(msg[i])));
+      }
+       }
       });
     </script>
   </body>
