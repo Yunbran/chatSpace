@@ -39,10 +39,10 @@ console.log(silence.name) // 'Silence'
 var fluffy = new Kitten({ name: 'fluffy' });
 fluffy.speak() // "Meow name is fluffy"
 
-// fluffy.save(function (err, fluffy) {
-//   if (err) return console.error(err);
-//   fluffy.speak();
-// });
+fluffy.save(function (err, fluffy) {
+  if (err) return console.error(err);
+  fluffy.speak();
+});
 
 
   var getData = function(){
