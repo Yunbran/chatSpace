@@ -4,10 +4,12 @@ var io = require('socket.io')(http);
 
 var mongodb = require("mongodb");
 var mongoose = require("mongoose");
+var connectionString = process.env.CUSTOMCONNSTR_MONGOLAB_URI;
+
 var server = new mongodb.Server("127.0.0.1", 27017, {});
 var client = new mongodb.Db('test', server);
 
-mongoose.connect('mongodb://localhost/test');
+mongoose.connect(connectionString);
 var db = mongoose.connection;
 
 db.on('error', console.error.bind(console, 'connection error:'));
